@@ -172,7 +172,7 @@ export default function ScatterWithBars() {
         borderColor: "#000000",
         borderWidth: 5,
         barPercentage: 0.8,
-        categoryPercentage: 0.8,
+        categoryPercentage: 0.4,
         errorBarWhiskerLineWidth: 2,
         errorBarLineWidth: 3,
         errorBarWhiskerRatio: 0.45,
@@ -180,8 +180,9 @@ export default function ScatterWithBars() {
     ],
   };
 
+
   const options = {
-    maintainAspectRatio: false, 
+    maintainAspectRatio: false,
     scales: {
       x: {
         type: "linear",
@@ -245,10 +246,5 @@ export default function ScatterWithBars() {
     },
   };
 
-  return (
-    <Scatter
-      data={data}
-      options={options}
-    />
-  );
+  return <Scatter data={data} options={options} />;
 }
