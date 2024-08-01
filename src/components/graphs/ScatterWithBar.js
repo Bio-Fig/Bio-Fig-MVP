@@ -181,7 +181,7 @@ export default function ScatterWithBars() {
   };
 
   const options = {
-    maintainAspectRatio: false, 
+    maintainAspectRatio: false,
     scales: {
       x: {
         type: "linear",
