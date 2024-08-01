@@ -38,57 +38,6 @@ ChartJS.register(
 // Custom Plugin Register 부분
 ChartJS.register(errorBarPlugin, customXYLinePlugin, customGridLinePlugin);
 
-function addOffsetToSameYValuesPerBar(scatterData, barYData) {
-  const OFFSET_STEP = 0.05; // x축 좌우 이동 정도
-  const POINT_RADIUS = 1; // 스캐터 점의 반지름
-
-  barYData.forEach((bar) => {
-    const filteredData = scatterData.filter((point) => point.x === bar.x);
-
-    // y 값의 중복 여부를 확인
-    const yValues = filteredData.map((point) => point.y);
-    const hasDuplicates = new Set(yValues).size !== yValues.length;
-
-    if (hasDuplicates) {
-      const offsetStart = bar.x - (OFFSET_STEP * (filteredData.length - 1)) / 2;
-
-      filteredData.forEach((point, index) => {
-        point.x = offsetStart + OFFSET_STEP * index;
-      });
-
-      // 스캐터 점이 겹치지 않도록 추가 조정
-      let hasOverlap;
-      do {
-        hasOverlap = false;
-        for (let i = 0; i < filteredData.length - 1; i++) {
-          for (let j = i + 1; j < filteredData.length; j++) {
-            const dx = filteredData[i].x - filteredData[j].x;
-            const dy = filteredData[i].y - filteredData[j].y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < POINT_RADIUS * 2) {
-              hasOverlap = true;
-              // 겹치는 경우 x 위치를 조정
-              if (dx === 0) {
-                filteredData[j].x += OFFSET_STEP;
-              } else {
-                const adjustment = OFFSET_STEP / dx;
-                filteredData[j].x += dx * adjustment;
-              }
-            }
-          }
-        }
-      } while (hasOverlap);
-    } else {
-      filteredData.forEach((point) => {
-        point.x = bar.x; // 중복이 없다면 원래의 x 값 유지
-      });
-    }
-  });
-
-  return scatterData;
-}
-
 function calculateBarDataWithErrors(savedData, stdDevs) {
   const groupedData = savedData.reduce((acc, { x, y }) => {
     if (!acc[x]) {
@@ -136,6 +85,34 @@ function calculateStandardDeviation(datas) {
   return stdDevs;
 }
 
+// 커스텀 플러그인 정의
+const customBarSpacingPlugin = {
+  id: 'customBarSpacing',
+  beforeDraw(chart) {
+    const { ctx, chartArea, data } = chart;
+    const meta = chart.getDatasetMeta(1); // 막대 데이터셋
+
+    // 막대 간 간격 조절을 위한 간격 값
+    const spacing = 5;
+    const barWidth = meta.data[0].width;
+
+    meta.data.forEach((bar, index) => {
+      const x = bar.x;
+      const y = bar.y;
+      const width = barWidth;
+      const height = bar.height;
+
+      // 간격에 따라 막대 위치 조정
+      const newWidth = width - spacing;
+      const offset = (width - newWidth) / 2;
+
+      ctx.clearRect(x - width / 2, y - height / 2, width, height);
+      ctx.fillStyle = data.datasets[1].backgroundColor[index];
+      ctx.fillRect(x - offset, y - height / 2, newWidth, height);
+    });
+  }
+};
+
 export default function ScatterWithBars() {
   const location = useLocation();
   const { savedData } = location.state || {};
@@ -149,39 +126,51 @@ export default function ScatterWithBars() {
     savedData,
     StandardDeviationWithSavedData
   );
-  // 스캐터 데이터에 오프셋 추가
-  const adjustedScatterData = addOffsetToSameYValuesPerBar(
-    scatterData,
-    barYData
-  );
+
+  const barColors = ["#8998fa", "#F59F91", "#A9E19B", "#FDB461"];
+  const scatterColors = ["#1532F5", "#ED4124", "#54C339", "#f19224"];
+  // scatterData의 각 점에 대해, 바의 색상과 동일하게 설정
+  const scatterDataWithColors = scatterData.map((point) => {
+    const barIndex = barYData.findIndex((bar) => bar.x === point.x);
+    return {
+      ...point,
+      backgroundColor: scatterColors[barIndex % barColors.length], // 바의 색상과 동일하게 설정
+    };
+  });
 
   const data = {
     datasets: [
       {
         type: "scatter",
         label: "Scatter Dataset",
-        data: adjustedScatterData,
-        backgroundColor: "rgba(0, 0, 0, 1)",
-        pointRadius: 6,
+        data: scatterDataWithColors,
+        pointRadius: 10,
+        // 각 점의 색상을 개별적으로 설정
+        pointBackgroundColor: scatterDataWithColors.map(point => point.backgroundColor),
       },
       {
         type: "barWithErrorBars",
         label: "Bar Dataset",
         data: barYData,
-        backgroundColor: ["#8998fa", "#F69F91", "#A8E19B", "#FDB461"],
-        borderColor: "#000000",
-        borderWidth: 5,
-        barPercentage: 0.8,
-        categoryPercentage: 0.8,
-        errorBarWhiskerLineWidth: 2,
-        errorBarLineWidth: 3,
+        backgroundColor: barColors,
+        borderColor: scatterColors,
+        borderWidth: 10,
+        barPercentage: 0.6,
+        categoryPercentage: 1,
+        errorBarWhiskerLineWidth: 4,
+        errorBarLineWidth: 4,
         errorBarWhiskerRatio: 0.45,
+        errorBarColor: scatterColors,
+        errorBarWhiskerColor: scatterColors
       },
     ],
   };
 
   const options = {
-    maintainAspectRatio: false, 
+    maintainAspectRatio: false,
+    plugins: {
+      customBarSpacing: true // 커스텀 플러그인 활성화
+    },
     scales: {
       x: {
         type: "linear",
