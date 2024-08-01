@@ -156,7 +156,7 @@ export default function ScatterWithBars() {
           minRotation: 45,
           font: {
             weight: "bold",
-            size: 20,
+            size: 25,
           },
           color: "black",
           callback: function (value) {
