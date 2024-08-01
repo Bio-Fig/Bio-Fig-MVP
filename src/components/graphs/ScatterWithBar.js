@@ -152,13 +152,14 @@ export default function ScatterWithBars() {
         type: "barWithErrorBars",
         label: "Bar Dataset",
         data: barYData,
+
         backgroundColor: barColors,
         borderColor: scatterColors,
         borderWidth: 10,
         barPercentage: 0.6,
         categoryPercentage: 1,
         errorBarWhiskerLineWidth: 4,
-        errorBarLineWidth: 4,
+        errorBarLineWidth: 4;
         errorBarWhiskerRatio: 0.45,
         errorBarColor: scatterColors,
         errorBarWhiskerColor: scatterColors
@@ -166,10 +167,11 @@ export default function ScatterWithBars() {
     ],
   };
 
+
   const options = {
     maintainAspectRatio: false,
     plugins: {
-      customBarSpacing: true // 커스텀 플러그인 활성화
+      customBarSpacing: true 
     },
     scales: {
       x: {
@@ -234,10 +236,5 @@ export default function ScatterWithBars() {
     },
   };
 
-  return (
-    <Scatter
-      data={data}
-      options={options}
-    />
-  );
+  return <Scatter data={data} options={options} />;
 }
